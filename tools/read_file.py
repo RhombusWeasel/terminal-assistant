@@ -28,7 +28,6 @@ def read_file(file):
   try:
     with open(path, 'r') as f:
       content = f.read()
-    print(content)
     return [{'role': 'system', 'content': content}]
   except Exception as e:
     logger.error(e)
