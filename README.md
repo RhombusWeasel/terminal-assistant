@@ -4,25 +4,30 @@ This is a terminal assistant project that provides assistance to users in achiev
 
 ## Features
 
-- Ask questions in your terminal and get the commands you need to succeed
-- All responses and system calls are logged as messages so you can ask about those pesky errors.
+- Installation of Apache2 web server
+- Displaying the current time
 
 ## Getting Started
 
 To get started with the terminal assistant, follow the steps below:
 
 1. Clone the repository
-2. Install the required dependencies
-3. Run the `main.py` file
+2. Navigate into the folder and copy the config file `cp ./config.ini.example ./config.ini`
+3. Add your API key to the config file and choose your model
+4. Run `./install.sh` this will create the venv and install the dependencies
+
+For future sessions you can use `./launch.sh`
 
 ## Usage
 
-Once the terminal assistant is running, you can interact with it by entering commands. Here are some examples of commands you can use:
+Once the terminal assistant is running, you can interact with it by entering commands:
 
 - `help`: Display the available commands
 - `tools`: List the available tools
 - `clear`: Clear the message history
 - `quit`: Exit the terminal assistant
+
+Anything not in the above list or the configured alieses for them is treated as a query and will be sent to openAI
 
 ## Contributing
 
