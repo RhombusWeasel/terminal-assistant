@@ -53,6 +53,7 @@ def process_query(query, msg, agent):
     responses = tools[key]['function'](args)
     for response in responses:
       msg.append(response)
+      print_msg(msg)
   return msg
 
 aliases = {
@@ -92,6 +93,14 @@ def load_history():
   except FileNotFoundError:
     pass  # It's okay if the history file doesn't exist yet
 
+def print_msg(msg):
+  if msg[-1]['role'] == 'assistant':
+    print(f'{colorama.Fore.GREEN}Assistant:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+  elif msg[-1]['role'] == 'system':
+    print(f'{colorama.Fore.CYAN}System:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+  elif msg[-1]['role'] == 'user':
+    print(f'{colorama.Fore.WHITE}User:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+
 def main():
   global resend
   agent = Agent(name_prefix='ai')
@@ -119,12 +128,7 @@ def main():
       else:
         msg = process_query(p, msg, agent)
 
-      if msg[-1]['role'] == 'assistant':
-        print(f'{colorama.Fore.GREEN}Assistant:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
-      elif msg[-1]['role'] == 'system':
-        print(f'{colorama.Fore.CYAN}System:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
-      elif msg[-1]['role'] == 'user':
-        print(f'{colorama.Fore.WHITE}User:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+      print_msg(msg)
   finally:  # Save command history when the program ends
     save_history()
 
