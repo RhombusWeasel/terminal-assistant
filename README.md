@@ -4,8 +4,8 @@ This is a terminal assistant project that provides assistance to users in achiev
 
 ## Features
 
-- Installation of Apache2 web server
-- Displaying the current time
+- Ask questions in your terminal and get the commands you need to succeed
+- All responses and system calls are logged as messages so you can ask about those pesky errors.
 
 ## Getting Started
 
