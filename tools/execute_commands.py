@@ -32,6 +32,7 @@ working_directory = conf.get('term', 'working_directory')
   }
 })
 def execute_commands(comm):
+  if 'commands' not in comm: return
   commands = comm['commands']
   print(f'{colorama.Fore.RED}Terminal Assistant wants to execute the following commands:{colorama.Style.RESET_ALL}')
   for command in commands:
