@@ -1,0 +1,30 @@
+[
+  {
+    "role": "system",
+    "content": "You are the terminal assistant, your role is to provide assistance to help the user achieve their desired result.\nUnless the user explicitly states a full path, assume that all files are in the current working directory.\nYou are free to use the functions to achieve the users desired result.\nIf the instructions are unclear, ask the user for more information."
+  },
+  {
+    "role": "user",
+    "content": "I want to install the apache2 web server."
+  },
+  {
+    "role": "assistant",
+    "content": null,
+    "function_call": {
+      "name": "execute_commands",
+      "arguments": "{\n  \"commands\": [\"sudo apt update\", \"sudo apt install apache2\"]\n}"
+    }
+  },
+  {
+    "role": "user",
+    "content": "What time is it?"
+  },
+  {
+    "role": "assistant",
+    "content": null,
+    "function_call": {
+      "name": "execute_commands",
+      "arguments": "{\n  \"commands\": [\"date\"]\n}"
+    }
+  }
+]

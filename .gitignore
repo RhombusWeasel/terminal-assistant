@@ -1,8 +1,12 @@
+#Venv
+_term_env_/
+
 # Config
 config.ini
 
-# Databases
+# Databases and history
 *.db
+history.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

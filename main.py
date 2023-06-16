@@ -31,43 +31,10 @@ def load_tools():
 colorama.init()
 resend = False
 
-messages = [
-  {
-    'role': 'system',
-    'content': f"""
-You are the terminal assistant, your role is to provide the correct {os_version} commands to the user.
-The current working directory is {working_directory}, this is where you should store any files you create or try to read from.
-Unless the user explicitly states a full path, assume that all files are in the current working directory.
-You are free to use the functions to achieve the users desired result.
-Try to use as few commands as possible to achieve the desired result.
-If the instructions are unclear, ask the user for more information.
-"""
-  },
-  {
-    'role': 'user',
-    'content': 'I want to install the apache2 web server.'
-  },
-  {
-    "role": "assistant",
-    "content": 'null',
-    "function_call": {
-      "name": "execute_commands",
-      "arguments": "{\n  \"commands\": [\"sudo apt update\", \"sudo apt install apache2\"]\n}"
-    }
-  },
-  {
-    'role': 'user',
-    'content': 'What time is it?'
-  },
-  {
-    "role": "assistant",
-    "content": 'null',
-    "function_call": {
-      "name": "execute_commands",
-      "arguments": "{\n  \"commands\": [\"date\"]\n}"
-    }
-  },
-]
+def reset_prompt():
+  with open('prompt.json', 'r') as f:
+    prompt = json.load(f)
+  return prompt
 
 def process_query(query, msg, agent):
   global funcs
@@ -128,7 +95,7 @@ def load_history():
 def main():
   global resend
   agent = Agent(name_prefix='ai')
-  msg = messages
+  msg = reset_prompt()
   cls()
   print(f'{colorama.Fore.CYAN}Welcome to the terminal assistant, you are running {os_version}{colorama.Style.RESET_ALL}')
   load_history()  # Load command history
@@ -146,7 +113,7 @@ def main():
         for tool in tools:
             print(f'  {tool} - {tools[tool]["schema"]["description"]}')
       elif p in aliases['clear']['aliases']:
-        msg = messages
+        msg = reset_prompt()
         cls()
         print('Message history cleared')
       else:
