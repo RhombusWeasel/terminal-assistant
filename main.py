@@ -51,27 +51,28 @@ def process_query(query, msg, agent):
       except:
         args = {}
     responses = tools[key]['function'](args)
-    for response in responses:
+    for i, response in enumerate(responses):
       msg.append(response)
-      print_msg(msg)
+      if i < len(msg) - 1:
+        print_msg(msg)
   return msg
 
 aliases = {
   'help': {
     'description': conf.get('descriptions', 'help'),
-    'aliases': conf.get('aliases', 'help').split(',')
+    'aliases': conf.get('aliases', 'help').split(', ')
   },
   'tools': {
     'description': conf.get('descriptions', 'tools'),
-    'aliases': conf.get('aliases', 'tools').split(',')
+    'aliases': conf.get('aliases', 'tools').split(', ')
   },
   'clear': {
     'description': conf.get('descriptions', 'clear'),
-    'aliases': conf.get('aliases', 'clear').split(',')
+    'aliases': conf.get('aliases', 'clear').split(', ')
   },
   'quit': {
     'description': conf.get('descriptions', 'quit'),
-    'aliases': conf.get('aliases', 'quit').split(',')
+    'aliases': conf.get('aliases', 'quit').split(', ')
   },
 }
 
@@ -108,6 +109,25 @@ def main():
   cls()
   print(f'{colorama.Fore.CYAN}Welcome to the terminal assistant, you are running {os_version}{colorama.Style.RESET_ALL}')
   load_history()  # Load command history
+
+  def recursive_complete(path, text):
+      completions = []
+      for root, dirs, files in os.walk(path):
+        for name in dirs + files:
+          if name.startswith(text):
+            completions.append(os.path.join(root, name))
+      return completions
+
+  def complete_filename(text, state):
+    """Tab completion function for filenames."""
+    completions = recursive_complete(working_directory, f'{working_directory}/{text}')
+    completions = [os.path.relpath(completion, working_directory) for completion in completions]  # Get relative path
+    return completions[state] if state < len(completions) else None
+
+  readline.set_completer_delims('\t')
+  readline.parse_and_bind("tab: complete")
+  readline.set_completer(complete_filename)
+
   try:
     while True:
       helptext()
@@ -120,15 +140,14 @@ def main():
         print('Available tools:')
         load_tools()
         for tool in tools:
-            print(f'  {tool} - {tools[tool]["schema"]["description"]}')
+          print(f'  {tool} - {tools[tool]["schema"]["description"]}')
       elif p in aliases['clear']['aliases']:
         msg = reset_prompt()
         cls()
         print('Message history cleared')
       else:
         msg = process_query(p, msg, agent)
-
-      print_msg(msg)
+        print_msg(msg)
   finally:  # Save command history when the program ends
     save_history()
 

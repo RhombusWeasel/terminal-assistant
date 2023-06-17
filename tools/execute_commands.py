@@ -50,7 +50,7 @@ def execute_commands(comm):
         out_str = output.stdout.decode('utf-8')
         if out_str == '':
           out_str = output.stderr.decode('utf-8')
-        responses.append({'role': 'system', 'content': out_str})
+        responses.append({'role': 'system', 'content': f'{command.split(" && ")[1]}\n{out_str}'})
       except Exception as e:
         responses.append({'role': 'system', 'content': f'Failed to execute command: {command}'})
         responses.append({'role': 'system', 'content': str(e)})
