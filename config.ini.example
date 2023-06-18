@@ -7,10 +7,10 @@ os_version = Your OS
 working_directory = /leave/this/it/will/get/populated/automatically
 
 [aliases]
-clear = clear,cls,-c,--clear
-help = help,?,-h,--help
-tools = tool,list,-t,--tool
-quit = quit,exit,-q,--quit
+clear = clear, cls, -c, --clear
+help = help, ?, -h, --help
+tools = tool, list, -t, --tool
+quit = quit, exit, -q, --quit
 
 [descriptions]
 clear = Clears the screen and current context
