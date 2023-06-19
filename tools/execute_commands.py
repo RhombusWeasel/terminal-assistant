@@ -46,7 +46,7 @@ def execute_commands(comm):
       try:
         # Run the command and capture the output
         command = f"cd {working_directory} && {command}"
-        output = subprocess.run(command, executable='/bin/bash',shell=True, capture_output=True)
+        output = subprocess.run(command, executable='/bin/bash', shell=True, capture_output=True)
         out_str = output.stdout.decode('utf-8')
         if out_str == '':
           out_str = output.stderr.decode('utf-8')

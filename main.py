@@ -113,20 +113,28 @@ def main():
   load_history()  # Load command history
 
   def recursive_complete(path, text):
-      completions = []
-      for root, dirs, files in os.walk(path):
-        for name in dirs + files:
-          if name.startswith(text):
-            completions.append(os.path.join(root, name))
-      return completions
+    completions = []
+    for root, dirs, files in os.walk(path):
+      for name in dirs + files:
+        full_path = os.path.join(root, name)
+        if full_path.startswith(text):
+          completions.append(full_path)
+    return completions
 
   def complete_filename(text, state):
     """Tab completion function for filenames."""
-    completions = recursive_complete(working_directory, f'{working_directory}/{text}')
+    # print("Working directory:", working_directory)  # Debug print
+    text = os.path.join(working_directory, text)  # Ensure text is an absolute path
+    # print("Text:", text)  # Debug print
+    completions = recursive_complete(working_directory, text)
     completions = [os.path.relpath(completion, working_directory) for completion in completions]  # Get relative path
-    return completions[state] if state < len(completions) else None
+    # print("Completions:", completions)  # Debug print
+    try:
+      return completions[state]
+    except IndexError:
+      return None
 
-  readline.set_completer_delims('\t')
+  readline.set_completer_delims(' ')
   readline.parse_and_bind("tab: complete")
   readline.set_completer(complete_filename)
 
