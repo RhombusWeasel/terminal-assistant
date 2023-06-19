@@ -34,6 +34,8 @@ resend = False
 def reset_prompt():
   with open('prompt.json', 'r') as f:
     prompt = json.load(f)
+  prompt[0]['content'].replace('{os_version}', os_version)
+  prompt[1]['content'].replace('{working_directory}', working_directory)
   return prompt
 
 def process_query(query, msg, agent):

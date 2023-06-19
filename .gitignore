@@ -8,6 +8,9 @@ config.ini
 *.db
 history.json
 
+# Projects folder
+projects/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
