@@ -4,7 +4,7 @@ from utils.logger import Logger
 
 
 class Database:
-    def __init__(self, db_name, log_level=Logger.DEBUG):
+    def __init__(self, db_name, log_level=Logger.ERROR):
         self.db_name = db_name
         self.log = Logger(db_name, log_level=log_level)
         self.log.info(f"Database initialized: {db_name}")

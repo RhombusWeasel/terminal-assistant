@@ -1,6 +1,7 @@
-import openai, os, uuid, subprocess
+import openai, uuid, subprocess
 import configparser
 import colorama
+import json
 from utils.logger import Logger
 from utils.db import Database
 from utils.json_validator import parse_json_string
@@ -12,7 +13,7 @@ colorama.init()
 openai.api_key = config.get('ai', 'api_key')
 
 class Agent:
-  def __init__(self, name_prefix='AI-', log_level=Logger.INFO, print_tokens=True, model='gpt-3.5-turbo-16k'):
+  def __init__(self, name_prefix='AI-', log_level=Logger.ERROR, print_tokens=True, model='gpt-3.5-turbo-16k'):
     self.uuid = str(uuid.uuid4())
     self.logger = Logger('{}:{}'.format(name_prefix, self.uuid.split('-')[0]), log_level=log_level)
     self.model = model
@@ -33,13 +34,20 @@ class Agent:
       print(f'{col}{breakdown}{colorama.Style.RESET_ALL}')
 
   def get_response(self, m, functions=[], function_call='auto'):
-    response = openai.ChatCompletion.create(
-      model=self.model,
-      messages=m,
-      functions=functions,
-      function_call=function_call,
-      temperature=0.2,
-    )
+    if len(functions) > 0:
+      response = openai.ChatCompletion.create(
+        model=self.model,
+        messages=m,
+        functions=functions,
+        function_call=function_call,
+        temperature=0.2,
+      )
+    else:
+      response = openai.ChatCompletion.create(
+        model=self.model,
+        messages=m,
+        temperature=0.2,
+      )
     self.print_tokens(response)
     txt = response.choices[0]['message']
     return txt
@@ -47,14 +55,11 @@ class Agent:
   def process_request(self, req_uuid, p):
     response_text = self.get_response(p)
     self.logger.info(f'Response received: {response_text}')
-    data = parse_json_string(response_text)
-    if data:
-      self.db.save_data("blackboards", req_uuid, "response", data)
-      self.logger.data(f'Response written to database with UUID {req_uuid}')
+    self.db.save_data("blackboards", req_uuid, "response", json.dumps(response_text))
 
   def check_response_status(self, req_uuid):
     response_text = self.db.load_data("blackboards", req_uuid, "response")
-    if response_text:
+    if response_text != '{"uuid": "pending"}':
       return parse_json_string(response_text)
     else:
       return False
@@ -62,6 +67,6 @@ class Agent:
   def submit_request(self, p, req_uuid):
     response_text = self.db.load_data("blackboards", req_uuid, "response")
     if not response_text:
-      self.db.save_data("blackboards", req_uuid, "response", {'uuid': 'pending'})
-    subprocess.Popen(['python', '-c', f'''from utils.async_ai import Agent; agent = Agent(print_tokens=True); agent.process_request("{req_uuid}", """{p}""")'''])
+      self.db.save_data("blackboards", req_uuid, "response", json.dumps({'uuid': 'pending'}))
+    subprocess.Popen(['python', '-c', f'''from utils.async_ai import Agent; agent = Agent(print_tokens=True); agent.process_request("{req_uuid}", {p})'''])
     return True

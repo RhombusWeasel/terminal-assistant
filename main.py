@@ -55,7 +55,7 @@ def process_query(query, msg, agent):
     responses = tools[key]['function'](args)
     for i, response in enumerate(responses):
       msg.append(response)
-      if i < len(msg) - 1:
+      if i < len(responses) - 1:
         print_msg(msg)
   return msg
 
