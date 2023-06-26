@@ -18,6 +18,25 @@ if conf.get('term', 'working_directory') != working_directory + '/':
   with open('config.ini', 'w') as f:
     conf.write(f)
 
+aliases = {
+  'help': {
+    'description': conf.get('descriptions', 'help'),
+    'aliases': conf.get('aliases', 'help').split(', ')
+  },
+  'tools': {
+    'description': conf.get('descriptions', 'tools'),
+    'aliases': conf.get('aliases', 'tools').split(', ')
+  },
+  'clear': {
+    'description': conf.get('descriptions', 'clear'),
+    'aliases': conf.get('aliases', 'clear').split(', ')
+  },
+  'quit': {
+    'description': conf.get('descriptions', 'quit'),
+    'aliases': conf.get('aliases', 'quit').split(', ')
+  },
+}
+
 def load_tools():
   # Iterate the tools folder and import all tools
   files = os.listdir(os.path.join(working_directory, 'tools'))
@@ -25,7 +44,6 @@ def load_tools():
     if file.endswith('.py'):
       tool = file[:-3]
       if tool not in tools:
-        logger.info(f'Loading tool {tool}')
         __import__(f'tools.{tool}')
 
 colorama.init()
@@ -59,27 +77,9 @@ def process_query(query, msg, agent):
         print_msg(msg)
   return msg
 
-aliases = {
-  'help': {
-    'description': conf.get('descriptions', 'help'),
-    'aliases': conf.get('aliases', 'help').split(', ')
-  },
-  'tools': {
-    'description': conf.get('descriptions', 'tools'),
-    'aliases': conf.get('aliases', 'tools').split(', ')
-  },
-  'clear': {
-    'description': conf.get('descriptions', 'clear'),
-    'aliases': conf.get('aliases', 'clear').split(', ')
-  },
-  'quit': {
-    'description': conf.get('descriptions', 'quit'),
-    'aliases': conf.get('aliases', 'quit').split(', ')
-  },
-}
-
 def helptext():
   print('Available commands:')
+  print(f"  {colorama.Fore.YELLOW}cmd{colorama.Style.RESET_ALL} - Toggle 'Command' mode to enter commands directly.")
   col_aliases = f"{colorama.Style.RESET_ALL}, {colorama.Fore.YELLOW}"
   for alias in aliases:
     print(f'  {colorama.Fore.YELLOW}{col_aliases.join(aliases[alias]["aliases"])}{colorama.Style.RESET_ALL} - {aliases[alias]["description"]}')
@@ -110,7 +110,10 @@ def main():
   msg = reset_prompt()
   cls()
   print(f'{colorama.Fore.CYAN}Welcome to the terminal assistant, you are running {os_version}{colorama.Style.RESET_ALL}')
+  helptext()
   load_history()  # Load command history
+
+  mode = "Query"  # The default mode is "Query"
 
   def recursive_complete(path, text):
     completions = []
@@ -140,24 +143,38 @@ def main():
 
   try:
     while True:
-      helptext()
-      p = input('Query > ')  # readline will automatically handle left/right and up/down keys
+      p = input(f'{mode} > ')  # readline will automatically handle left/right and up/down keys
       if p in aliases['quit']['aliases']:
         break
-      elif p in aliases['help']['aliases']:
-        print(helptext)
-      elif p in aliases['tools']['aliases']:
-        print('Available tools:')
-        load_tools()
-        for tool in tools:
-          print(f'  {tool} - {tools[tool]["schema"]["description"]}')
-      elif p in aliases['clear']['aliases']:
-        msg = reset_prompt()
-        cls()
-        print('Message history cleared')
+      elif p == "cmd":  # Toggle for changing mode
+        mode = "Command" if mode == "Query" else "Query"
+        print(f'Switched to {mode} mode.')
+        continue
+      elif mode == "Command":  # In Command mode, we don't call OpenAI but use the execute_commands tool
+        execute_commands_tool = tools.get('execute_commands')  # You need to make sure this tool is available
+        if execute_commands_tool:
+          print(f'Executing command: {p}')
+          responses = execute_commands_tool['function']({'commands': [p]}, override=True)
+          for response in responses:
+            msg.append(response)
+            print_msg(msg)
+        else:
+          print("Error: 'execute_commands' tool not found.")
       else:
-        msg = process_query(p, msg, agent)
-        print_msg(msg)
+        if p in aliases['help']['aliases']:
+          print(helptext)
+        elif p in aliases['tools']['aliases']:
+          print('Available tools:')
+          load_tools()
+          for tool in tools:
+            print(f'  {tool} - {tools[tool]["schema"]["description"]}')
+        elif p in aliases['clear']['aliases']:
+          msg = reset_prompt()
+          cls()
+          print('Message history cleared')
+        else:
+          msg = process_query(p, msg, agent)
+          print_msg(msg)
   finally:  # Save command history when the program ends
     save_history()
 
