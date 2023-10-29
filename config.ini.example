@@ -6,6 +6,11 @@ model = Your choice of model
 os_version = Your OS
 working_directory = /leave/this/it/will/get/populated/automatically
 
+[memory]
+base_url = https://memory.therpgserver.co.uk
+username = Your username
+password = Your password
+
 [aliases]
 clear = clear, cls, -c, --clear
 help = help, ?, -h, --help
