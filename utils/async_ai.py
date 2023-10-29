@@ -25,28 +25,28 @@ class Agent:
     if self.show_token_use:
       usage = response.usage
       breakdown = f'Token Usage: Prompt: {usage["prompt_tokens"]} | AI: {usage["completion_tokens"]} | Total: {usage["total_tokens"]}'
-      if usage['total_tokens'] <= 2000:
+      if usage['total_tokens'] <= 3000:
         col = colorama.Fore.GREEN
-      elif usage['total_tokens'] <= 3000:
+      elif usage['total_tokens'] <= 7000:
         col = colorama.Fore.YELLOW
-      elif usage['total_tokens'] <= 3500:
+      else:
         col = colorama.Fore.RED
       print(f'{col}{breakdown}{colorama.Style.RESET_ALL}')
 
-  def get_response(self, m, functions=[], function_call='auto'):
+  def get_response(self, m, functions=[], function_call='auto', temperature=0.2):
     if len(functions) > 0:
       response = openai.ChatCompletion.create(
         model=self.model,
         messages=m,
         functions=functions,
         function_call=function_call,
-        temperature=0.2,
+        temperature=temperature,
       )
     else:
       response = openai.ChatCompletion.create(
         model=self.model,
         messages=m,
-        temperature=0.2,
+        temperature=temperature,
       )
     self.print_tokens(response)
     txt = response.choices[0]['message']

@@ -19,6 +19,7 @@ def new_tool(name, schema):
     @wraps(function)
     def wrapper(*args, **kwargs):
       return function(*args, **kwargs)
+
     tools[name] = {
       'schema': schema,
       'function': wrapper

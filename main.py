@@ -4,7 +4,7 @@ from utils.tools import tools
 import configparser
 import colorama
 import readline
-import json, os
+import json, time, os
 
 logger = Logger('term')
 # Get the location of the current file and set it as working directory
@@ -45,6 +45,7 @@ def load_tools():
       tool = file[:-3]
       if tool not in tools:
         __import__(f'tools.{tool}')
+        logger.info(f'Loaded tool {tool}')
 
 colorama.init()
 resend = False
@@ -52,19 +53,25 @@ resend = False
 def reset_prompt():
   with open('prompt.json', 'r') as f:
     prompt = json.load(f)
+  prompt[0]['content'].replace('{date_time}', str(time.time()))
   prompt[0]['content'].replace('{os_version}', os_version)
   prompt[1]['content'].replace('{working_directory}', working_directory)
   return prompt
 
-def process_query(query, msg, agent):
+
+def process_query(query, msg, agent, resend=False):
   global funcs
-  msg.append({'role': 'user', 'content': query})
+  if not resend:
+    msg.append({'role': 'user', 'content': query})
+    print_msg(msg)
   response = agent.get_response(msg, functions=funcs)
   if 'content' in response and response['content'] != None:
     msg.append(response)
-  elif 'function_call' in response:
+  if 'function_call' in response:
     key = response['function_call']['name']
     args = response['function_call']['arguments']
+    msg.append(response)
+    print_msg(msg)
     if type(args) != dict:
       try:
         args = json.loads(args)
@@ -75,6 +82,10 @@ def process_query(query, msg, agent):
       msg.append(response)
       if i < len(responses) - 1:
         print_msg(msg)
+      if 'resend' in response:
+        msg[-1].pop('resend', None)
+        # New data has been added to the message list, so we need to resend it to OpenAI with the new data
+        msg = process_query(query, msg, agent, resend=True)
   return msg
 
 def helptext():
@@ -84,7 +95,7 @@ def helptext():
   for alias in aliases:
     print(f'  {colorama.Fore.YELLOW}{col_aliases.join(aliases[alias]["aliases"])}{colorama.Style.RESET_ALL} - {aliases[alias]["description"]}')
 
-def cls():
+def clear_screen():
   os.system('cls' if os.name=='nt' else 'clear')
 
 def save_history():
@@ -97,18 +108,24 @@ def load_history():
     pass  # It's okay if the history file doesn't exist yet
 
 def print_msg(msg):
+  with open('output_full.json', 'w') as f:
+    json.dump(msg, f, indent=2)
   if msg[-1]['role'] == 'assistant':
-    print(f'{colorama.Fore.GREEN}Assistant:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+    if msg[-1]['content'] != None:
+      print(f'{colorama.Fore.GREEN}Assistant:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+    if 'function_call' in msg[-1]:
+      print(f'{colorama.Fore.YELLOW}Function call: {msg[-1]["function_call"]["name"]}{colorama.Style.RESET_ALL}')
+      args = json.loads(msg[-1]['function_call']['arguments'])
+      for arg in args:
+        print(f'{colorama.Fore.YELLOW}  {arg}: {args[arg]}{colorama.Style.RESET_ALL}')
   elif msg[-1]['role'] == 'system':
     print(f'{colorama.Fore.CYAN}System:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
-  elif msg[-1]['role'] == 'user':
-    print(f'{colorama.Fore.WHITE}User:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
 
 def main():
   global resend
   agent = Agent(name_prefix='ai')
   msg = reset_prompt()
-  cls()
+  clear_screen()
   print(f'{colorama.Fore.CYAN}Welcome to the terminal assistant, you are running {os_version}{colorama.Style.RESET_ALL}')
   helptext()
   load_history()  # Load command history
@@ -162,7 +179,7 @@ def main():
           print("Error: 'execute_commands' tool not found.")
       else:
         if p in aliases['help']['aliases']:
-          print(helptext)
+          helptext()
         elif p in aliases['tools']['aliases']:
           print('Available tools:')
           load_tools()
@@ -170,7 +187,7 @@ def main():
             print(f'  {tool} - {tools[tool]["schema"]["description"]}')
         elif p in aliases['clear']['aliases']:
           msg = reset_prompt()
-          cls()
+          clear_screen()
           print('Message history cleared')
         else:
           msg = process_query(p, msg, agent)
