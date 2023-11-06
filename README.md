@@ -16,7 +16,9 @@ To get started with the terminal assistant, follow the steps below:
 2. Navigate into the folder and copy the config file `cp ./config.ini.example ./config.ini`
 3. Add your API key to the config file and choose your model
 4. Run `./install.sh` this will create the venv and install the dependencies
-5. Edit the reset_prefs.py file and add any initial memory entries you want the assistant to know. The data should be a list of objects containing the information with tags.
+5. Edit the reset_prefs.py file and add any initial memory entries you want the assistant to know.
+   The data should be a list of objects containing the information with tags.
+6. Execute `python3 reset_prefs.py` to add your seed data to reverie
 
 For future sessions you can use `./launch.sh`
 
