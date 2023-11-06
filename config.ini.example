@@ -1,5 +1,6 @@
 [ai]
-api_key = Your API Key 
+api_key = Your API Key
+token_limit = 7000
 model = Your choice of model
 
 [term]
@@ -22,4 +23,3 @@ clear = Clears the screen and current context
 help = Displays help information
 tools = Lists available tools
 quit = Exits the program
-
