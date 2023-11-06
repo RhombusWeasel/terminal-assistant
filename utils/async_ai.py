@@ -49,7 +49,10 @@ class Agent:
         temperature=temperature,
       )
     self.print_tokens(response)
-    txt = response.choices[0]['message']
+    txt = {
+      "text": response.choices[0]['message'],
+      "tokens": response.usage
+    }
     return txt
 
   def process_request(self, req_uuid, p):

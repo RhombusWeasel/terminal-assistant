@@ -75,7 +75,7 @@ def get_summary(query, url):
       break
     time.sleep(.5)
 
-  return response['content']
+  return response['text']['content']
 
 @new_tool('google_search_summarizer', {
   'name': 'google_search_summarizer',

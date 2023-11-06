@@ -55,6 +55,7 @@ def reset_prompt():
     prompt = json.load(f)
   prompt[0]['content'].replace('{date_time}', str(time.time()))
   prompt[0]['content'].replace('{os_version}', os_version)
+  prompt[0]['content'].replace('{name}', conf.get('term', 'name'))
   prompt[1]['content'].replace('{working_directory}', working_directory)
   return prompt
 
@@ -64,7 +65,9 @@ def process_query(query, msg, agent, resend=False):
   if not resend:
     msg.append({'role': 'user', 'content': query})
     print_msg(msg)
-  response = agent.get_response(msg, functions=funcs)
+  response = agent.get_response(msg, functions=funcs, temperature=0.6)
+  tokens = response['tokens']
+  response = response['text']
   if 'content' in response and response['content'] != None:
     msg.append(response)
   if 'function_call' in response:
@@ -86,6 +89,12 @@ def process_query(query, msg, agent, resend=False):
         msg[-1].pop('resend', None)
         # New data has been added to the message list, so we need to resend it to OpenAI with the new data
         msg = process_query(query, msg, agent, resend=True)
+  token_limit = conf.getint('ai', 'token_limit')
+  if tokens['total_tokens'] > token_limit:
+    msg.append({'role': 'system', 'content': f'Token limit exceeded.  to conserve information please now summarize the above conversation and respond with the notes in as few tokens as possible.  Use various techniques to compress as much information into the response as possible as you will not see the information after this message.'})
+    response = agent.get_response(msg, functions=funcs, temperature=0.6)
+    msg = reset_prompt()
+    msg.append({'role': 'user', 'content': response['text']})
   return msg
 
 def helptext():

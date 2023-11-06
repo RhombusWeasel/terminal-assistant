@@ -73,7 +73,7 @@ tools = [
 
 @new_tool('mem_archive', {
     'name': 'mem_archive',
-    'description': "Add or update data in the memory archive.",
+    'description': "Add or update data in the memory archive. Only use if the user or system requests it.",
     'parameters': {
       'type': 'object',
       'properties': {
@@ -109,7 +109,7 @@ def mem_archive(data):
     {"role": "system", "content": f"Here are the tags that were searched to get the archive data:\n\n{data['tags']}\n\nHere are the top 2 results from our search of the provided tags:\n\n{results}\n\nHere is the new information for you to review:\n\n{data['data']}\n\nInstructions provided:\n\n{data['instructions']}\nDoes the new information need to be merged with one of the existing objects or is it completely unrelated?\nCall the correct function to complete the task."}
   ]
   # print('getting response...')
-  response = agent.get_response(m, functions=tools)
+  response = agent.get_response(m, functions=tools)['text']
   # print(response)
   if 'function_call' in response:
     print(response['function_call'])
