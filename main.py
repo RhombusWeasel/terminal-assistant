@@ -53,10 +53,10 @@ resend = False
 def reset_prompt():
   with open('prompt.json', 'r') as f:
     prompt = json.load(f)
-  prompt[0]['content'].replace('{date_time}', str(time.time()))
-  prompt[0]['content'].replace('{os_version}', os_version)
-  prompt[0]['content'].replace('{name}', conf.get('term', 'name'))
-  prompt[1]['content'].replace('{working_directory}', working_directory)
+  prompt[0]['content'] = prompt[0]['content'].replace('{date_time}', str(time.time()))
+  prompt[0]['content'] = prompt[0]['content'].replace('{os_version}', os_version)
+  prompt[0]['content'] = prompt[0]['content'].replace('{name}', conf.get('term', 'name'))
+  prompt[1]['content'] = prompt[1]['content'].replace('{working_directory}', working_directory)
   return prompt
 
 
