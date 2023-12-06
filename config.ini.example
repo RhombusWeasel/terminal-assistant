@@ -1,11 +1,12 @@
 [ai]
 api_key = Your API Key
 token_limit = 7000
-model = Your choice of model
+model = Your choice of model (from https://platform.openai.com/docs/models)
 
 [term]
 os_version = Your OS
 working_directory = /leave/this/it/will/get/populated/automatically
+name = Assistant Name
 
 [memory]
 base_url = https://memory.therpgserver.co.uk
