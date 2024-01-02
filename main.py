@@ -1,10 +1,13 @@
 from utils.logger import Logger
 from utils.async_ai import Agent
 from utils.tools import tools
+from pygments import highlight
+from pygments.lexers import PythonLexer, get_lexer_by_name
+from pygments.formatters import TerminalFormatter
 import configparser
 import colorama
 import readline
-import json, time, os
+import json, time, os, re
 
 logger = Logger('term')
 # Get the location of the current file and set it as working directory
@@ -121,14 +124,40 @@ def print_msg(msg):
     json.dump(msg, f, indent=2)
   if msg[-1]['role'] == 'assistant':
     if msg[-1]['content'] != None:
-      print(f'{colorama.Fore.GREEN}Assistant:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+      content = msg[-1]['content']
+      highlighted_content = highlight_code(content)
+      # highlighted_content = new_highlight(content)
+      print(f'{colorama.Fore.WHITE}{conf.get("term", "name")}:\n{colorama.Fore.GREEN}{highlighted_content}{colorama.Style.RESET_ALL}')
     if 'function_call' in msg[-1]:
       print(f'{colorama.Fore.YELLOW}Function call: {msg[-1]["function_call"]["name"]}{colorama.Style.RESET_ALL}')
       args = json.loads(msg[-1]['function_call']['arguments'])
       for arg in args:
-        print(f'{colorama.Fore.YELLOW}  {arg}: {args[arg]}{colorama.Style.RESET_ALL}')
+        if arg != 'response':
+          print(f'{colorama.Fore.YELLOW}  {arg}: {args[arg]}{colorama.Style.RESET_ALL}')
   elif msg[-1]['role'] == 'system':
     print(f'{colorama.Fore.CYAN}System:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+
+def highlight_code(content):
+  code_pattern = r"```(\w+)(.*?)```"
+  code_blocks = re.findall(code_pattern, content, re.DOTALL)
+  for lang, code in code_blocks:
+    if lang == '':
+      lang = 'bash'
+    lexer = get_lexer_by_name(lang, stripall=True)
+    formatter = TerminalFormatter(style='colorful', bg='light')
+    highlighted_code = highlight(code, lexer, formatter)
+    content = content.replace(f"```{lang}{code}```", f"{highlighted_code}{colorama.Fore.GREEN}")
+
+  # Add a second check for code blocks without language labels
+  code_pattern = r"```(.*?)```"
+  code_blocks = re.findall(code_pattern, content, re.DOTALL)
+  for code in code_blocks:
+    lang = 'bash'  # Assume all code blocks without language labels are bash
+    lexer = get_lexer_by_name(lang, stripall=True)
+    formatter = TerminalFormatter(style='colorful', bg='light')
+    highlighted_code = highlight(code, lexer, formatter)
+    content = content.replace(f"```{code}```", f"{highlighted_code}{colorama.Fore.GREEN}")
+  return content
 
 def main():
   global resend
