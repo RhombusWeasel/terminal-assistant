@@ -1,5 +1,6 @@
 from utils.logger import Logger
 from utils.tools import new_tool
+from utils.prompt_tools import print_msg
 import configparser
 
 logger = Logger('tool_write')
@@ -26,6 +27,12 @@ working_directory = conf.get('term', 'working_directory')
   }
 })
 def write_file(data):
-  with open(working_directory +'/'+ data['file'], 'w') as f:
+  path = data['file']
+  if not working_directory in path:
+    path = working_directory + '/' + path
+  with open(path, 'w') as f:
     f.write(data['content'])
-  return [{'role': 'system', 'content': f'Wrote to file: {data["file"]}'}]
+  logger.info(f'Wrote to file: {path}')
+  response = [{'role': 'system', 'content': f'Wrote to file: {path}'}]
+  print_msg(response)
+  return response

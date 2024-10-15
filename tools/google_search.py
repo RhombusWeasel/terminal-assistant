@@ -1,6 +1,7 @@
 from utils.logger import Logger
 from utils.tools import new_tool
 from utils.async_ai import Agent
+from utils.web_summary import read_page, banned_extensions
 import configparser
 import colorama
 import requests
@@ -8,7 +9,7 @@ import time, uuid
 from bs4 import BeautifulSoup
 from newspaper import Article
 
-logger = Logger('google_search_summarizer')
+logger = Logger('google_search')
 conf = configparser.ConfigParser()
 conf.read('config.ini')
 
@@ -19,63 +20,7 @@ cyan = colorama.Fore.CYAN
 underline = "\033[4m"
 reset = colorama.Style.RESET_ALL
 
-banned_extensions = [
-  '.gov', 
-  '.tv',
-  '.cn', 
-  '.ru', 
-  '.hk', 
-  '.info', 
-  '.cc', 
-  '.pw', 
-  '.tk', 
-  '.xyz', 
-  '.link', 
-  '.click'
-]
-
-ban_list = " ".join("-" + ext for ext in banned_extensions)
-
-def extract_article(url):
-  try:
-    article = Article(url)
-    article.download()
-    article.parse()
-    return article.text
-  except Exception as e:
-    print(f"Failed to retrieve article from {cyan}{underline}{url}. {red}Error: {str(e)}{reset}")
-    return None
-
-def get_summary(query, url):
-  # Create an Agent object
-  agent = Agent()
-
-  # Get the text of the URL
-  text = extract_article(url)
-
-  if text is None:
-    return None
-  
-  # Create a message dictionary for the chat model
-  m = [
-    {"role": "system", "content": "You are a summary assistant, your role is to summarize the below data and include only information relevant to the users query."},
-    {"role": "user", "content": f"{query}."},
-    {"role": "system", "content": f"Here is the information for you to summarize:\n\n{text}"}
-  ]
-  
-  # Generate a new UUID for the request
-  req_uuid = str(uuid.uuid4())
-  # Submit the request
-  agent.submit_request(m, req_uuid)
-
-  # Wait for response to be ready (this is a very naive approach, in production code, consider a better polling/backoff strategy)
-  while True:
-    response = agent.check_response_status(req_uuid)
-    if response is not False:
-      break
-    time.sleep(.5)
-
-  return response['text']['content']
+ban_list = ' '.join([f'-site:{ext}' for ext in banned_extensions])
 
 @new_tool('google_search_summarizer', {
   'name': 'google_search_summarizer',
@@ -85,7 +30,7 @@ def get_summary(query, url):
     'properties': {
       'query': {
         'type': 'string',
-        'description': 'The search query to input to Google.',
+        'description': 'The search query to input to Google  Use any keywords and SEO techniques to describe what you are looking for. Don\'t include a date or year for any searches not related specifically to the past.',
       }
     },
     'required': ['query']
@@ -110,12 +55,16 @@ def google_search_summarizer(data, limit=5):
     soup = BeautifulSoup(response.text, "html.parser")
     for g in soup.find_all('div', class_='tF2Cxc'):
       link = g.find('a')['href']
-      print(f"""{reset}Reading: {cyan}{underline}{link}{reset}""")
+      site_data = read_page(base_url, link, query)
+      content = f"""{reset}Link: {cyan}{underline}{link}{reset}\nSummary:\n{grey}{site_data["summary"]}{reset}\n"""
+      if len(site_data["links"]) > 0:
+        content += "Related Links:\n"
+        for l in site_data["links"]:
+          content += f"{cyan}{underline}{l}{reset}\n"
       search_results.append({
         "role": 'system',
-        'content': f'{reset}Link: {cyan}{underline}{link}{reset}\nSummary:\n{grey}{get_summary(query, link)}{reset}'
+        'content': content
       })
-
     return search_results
   else:
     return [{'role': 'system', 'content': 'Failed to search Google.'}]

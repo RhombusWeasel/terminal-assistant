@@ -13,7 +13,7 @@ colorama.init()
 openai.api_key = config.get('ai', 'api_key')
 
 class Agent:
-  def __init__(self, name_prefix='AI-', log_level=Logger.ERROR, print_tokens=True, model='gpt-3.5-turbo-16k'):
+  def __init__(self, name_prefix='AI-', log_level=Logger.ERROR, print_tokens=False, model='gpt-4o'):
     self.uuid = str(uuid.uuid4())
     self.logger = Logger('{}:{}'.format(name_prefix, self.uuid.split('-')[0]), log_level=log_level)
     self.model = model
@@ -71,5 +71,5 @@ class Agent:
     response_text = self.db.load_data("blackboards", req_uuid, "response")
     if not response_text:
       self.db.save_data("blackboards", req_uuid, "response", json.dumps({'uuid': 'pending'}))
-    subprocess.Popen(['python', '-c', f'''from utils.async_ai import Agent; agent = Agent(print_tokens=True); agent.process_request("{req_uuid}", {p})'''])
+    subprocess.Popen(['python', '-c', f'''from utils.async_ai import Agent; agent = Agent(); agent.process_request("{req_uuid}", {p})'''])
     return True

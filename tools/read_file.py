@@ -1,5 +1,6 @@
 from utils.tools import new_tool
 from utils.logger import Logger
+from utils.prompt_tools import print_msg
 import configparser
 import os
 
@@ -15,7 +16,7 @@ conf.read('config.ini')
       'properties': {
         'file': {
           'type': 'string',
-          'description': 'The path to the file to read.',
+          'description': 'The path to the file to read. the filepath will have the current working directory added for you, simply give a path relative to the working directory.',
         }
       },
       'required': ['file']
@@ -24,11 +25,20 @@ conf.read('config.ini')
 )
 def read_file(file):
   working_directory = conf.get('term', 'working_directory')
-  path = os.path.join(working_directory, file['file'])
+  # check that working directory is not currently in the filepath
+  if not working_directory in file['file']:
+    path = os.path.join(working_directory, file['file'])
+  else:
+    path = file['file']
   try:
     with open(path, 'r') as f:
       content = f.read()
-    return [{'role': 'system', 'content': content}]
+    logger.info(f'Read file: {path}')
+    response = [{'role': 'system', 'content': f'Read file: {path}\n\n{content}', 'resend': True}]
+    print_msg(response)
+    return response
   except Exception as e:
     logger.error(e)
-    return [{'role': 'system', 'content': f'Error: {e}'}]
+    response = [{'role': 'system', 'content': f'Error reading file: {path}\n\n{e}'}]
+    print_msg(response)
+    return response

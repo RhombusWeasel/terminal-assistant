@@ -6,6 +6,7 @@ import colorama
 
 from utils.tools import new_tool
 from utils.logger import Logger
+from utils.prompt_tools import print_msg
 
 logger = Logger('tool_execute')
 conf = configparser.ConfigParser()
@@ -58,10 +59,12 @@ def process_commands(commands):
                         pid, status = os.wait()
                         if pid != -1:
                             break
-                responses.append({'role': 'system', 'content': f'{command}\n{out_str}'})
+                responses.append({'role': 'system', 'content': f'{command}\n{out_str}\nCommand executed successfully.'})
         except Exception as e:
             responses.append({'role': 'system', 'content': f'Failed to execute command: {command}'})
             responses.append({'role': 'system', 'content': str(e)})
+    for response in responses:
+        print_msg([response], filepath='output/exe.json')
     return responses
 
 

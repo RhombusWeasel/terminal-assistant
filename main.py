@@ -1,9 +1,7 @@
 from utils.logger import Logger
 from utils.async_ai import Agent
 from utils.tools import tools
-from pygments import highlight
-from pygments.lexers import PythonLexer, get_lexer_by_name
-from pygments.formatters import TerminalFormatter
+from utils.prompt_tools import reset_prompt, print_msg
 import configparser
 import colorama
 import readline
@@ -53,16 +51,6 @@ def load_tools():
 colorama.init()
 resend = False
 
-def reset_prompt():
-  with open('prompt.json', 'r') as f:
-    prompt = json.load(f)
-  prompt[0]['content'] = prompt[0]['content'].replace('{date_time}', str(time.time()))
-  prompt[0]['content'] = prompt[0]['content'].replace('{os_version}', os_version)
-  prompt[0]['content'] = prompt[0]['content'].replace('{name}', conf.get('term', 'name'))
-  prompt[1]['content'] = prompt[1]['content'].replace('{working_directory}', working_directory)
-  return prompt
-
-
 def process_query(query, msg, agent, resend=False):
   global funcs
   if not resend:
@@ -77,7 +65,7 @@ def process_query(query, msg, agent, resend=False):
     key = response['function_call']['name']
     args = response['function_call']['arguments']
     msg.append(response)
-    print_msg(msg)
+    # print_msg(msg)
     if type(args) != dict:
       try:
         args = json.loads(args)
@@ -86,8 +74,8 @@ def process_query(query, msg, agent, resend=False):
     responses = tools[key]['function'](args)
     for i, response in enumerate(responses):
       msg.append(response)
-      if i < len(responses) - 1:
-        print_msg(msg)
+      # if i < len(responses) - 1:
+      #   print_msg(msg)
       if 'resend' in response:
         msg[-1].pop('resend', None)
         # New data has been added to the message list, so we need to resend it to OpenAI with the new data
@@ -111,53 +99,13 @@ def clear_screen():
   os.system('cls' if os.name=='nt' else 'clear')
 
 def save_history():
-  readline.write_history_file('history.json')
+  readline.write_history_file('output/history.json')
 
 def load_history():
   try:
-    readline.read_history_file('history.json')
+    readline.read_history_file('output/history.json')
   except FileNotFoundError:
     pass  # It's okay if the history file doesn't exist yet
-
-def print_msg(msg):
-  with open('output_full.json', 'w') as f:
-    json.dump(msg, f, indent=2)
-  if msg[-1]['role'] == 'assistant':
-    if msg[-1]['content'] != None:
-      content = msg[-1]['content']
-      highlighted_content = highlight_code(content)
-      # highlighted_content = new_highlight(content)
-      print(f'{colorama.Fore.WHITE}{conf.get("term", "name")}:\n{colorama.Fore.GREEN}{highlighted_content}{colorama.Style.RESET_ALL}')
-    if 'function_call' in msg[-1]:
-      print(f'{colorama.Fore.YELLOW}Function call: {msg[-1]["function_call"]["name"]}{colorama.Style.RESET_ALL}')
-      args = json.loads(msg[-1]['function_call']['arguments'])
-      for arg in args:
-        if arg != 'response':
-          print(f'{colorama.Fore.YELLOW}  {arg}: {args[arg]}{colorama.Style.RESET_ALL}')
-  elif msg[-1]['role'] == 'system':
-    print(f'{colorama.Fore.CYAN}System:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
-
-def highlight_code(content):
-  code_pattern = r"```(\w+)(.*?)```"
-  code_blocks = re.findall(code_pattern, content, re.DOTALL)
-  for lang, code in code_blocks:
-    if lang == '':
-      lang = 'bash'
-    lexer = get_lexer_by_name(lang, stripall=True)
-    formatter = TerminalFormatter(style='colorful', bg='light')
-    highlighted_code = highlight(code, lexer, formatter)
-    content = content.replace(f"```{lang}{code}```", f"{highlighted_code}{colorama.Fore.GREEN}")
-
-  # Add a second check for code blocks without language labels
-  code_pattern = r"```(.*?)```"
-  code_blocks = re.findall(code_pattern, content, re.DOTALL)
-  for code in code_blocks:
-    lang = 'bash'  # Assume all code blocks without language labels are bash
-    lexer = get_lexer_by_name(lang, stripall=True)
-    formatter = TerminalFormatter(style='colorful', bg='light')
-    highlighted_code = highlight(code, lexer, formatter)
-    content = content.replace(f"```{code}```", f"{highlighted_code}{colorama.Fore.GREEN}")
-  return content
 
 def main():
   global resend
