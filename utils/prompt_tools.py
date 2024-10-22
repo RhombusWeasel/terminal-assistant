@@ -8,9 +8,9 @@ import time, uuid, json, os, re
 import colorama
 
 logger = Logger('compress_context')
-working_directory = os.path.dirname(os.path.abspath(__file__))
 conf = configparser.ConfigParser()
 conf.read('config.ini')
+working_directory = conf.get('term', 'working_directory')
 
 summary_prompt = '''
 You are a summary assistant, your role is to summarize the below data and include 
@@ -28,12 +28,12 @@ system information, please include that in the report as well.
 def reset_prompt():
   with open('prompt.json', 'r') as f:
     prompt = json.load(f)
-  prompt[0]['content'] = prompt[0]['content'].replace('{date_time}', str(time.strftime('%Y-%m-%d %H:%M:%S')))
+  prompt[0]['content'] = prompt[0]['content'].replace('{date_time}',  str(time.strftime('%Y-%m-%d %H:%M:%S')))
   prompt[0]['content'] = prompt[0]['content'].replace('{os_version}', conf.get('term', 'os_version'))
-  prompt[0]['content'] = prompt[0]['content'].replace('{name}', conf.get('term', 'name'))
+  prompt[0]['content'] = prompt[0]['content'].replace('{name}',       conf.get('term', 'name'))
   prompt[0]['content'] = prompt[0]['content'].replace('{working_directory}', working_directory)
-  prompt[0]['content'] = prompt[0]['content'].replace('{username}', conf.get('user', 'username'))
-  prompt[0]['content'] = prompt[0]['content'].replace('{location}', conf.get('user', 'location'))
+  prompt[0]['content'] = prompt[0]['content'].replace('{username}',   conf.get('user', 'username'))
+  prompt[0]['content'] = prompt[0]['content'].replace('{location}',   conf.get('user', 'location'))
   return prompt
 
 def highlight_code(content):
@@ -66,15 +66,15 @@ def print_msg(msg, filepath='output/full.json'):
       content = msg[-1]['content']
       highlighted_content = highlight_code(content)
       # highlighted_content = new_highlight(content)
-      print(f'{colorama.Fore.WHITE}{conf.get("term", "name")}:\n{colorama.Fore.GREEN}{highlighted_content}{colorama.Style.RESET_ALL}')
+      print(f'{colorama.Fore.WHITE}{conf.get("term", "name")}{colorama.Style.RESET_ALL}:\n{colorama.Fore.GREEN}{highlighted_content}{colorama.Style.RESET_ALL}')
     if 'function_call' in msg[-1]:
-      print(f'{colorama.Fore.YELLOW}Function call: {msg[-1]["function_call"]["name"]}{colorama.Style.RESET_ALL}')
+      print(f'{colorama.Fore.YELLOW}Function call{colorama.Style.RESET_ALL}: {msg[-1]["function_call"]["name"]}{colorama.Style.RESET_ALL}')
       args = json.loads(msg[-1]['function_call']['arguments'])
       for arg in args:
         if arg != 'response':
           print(f'{colorama.Fore.YELLOW}  {arg}: {args[arg]}{colorama.Style.RESET_ALL}')
   elif msg[-1]['role'] == 'system':
-    print(f'{colorama.Fore.CYAN}System:\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
+    print(f'{colorama.Fore.CYAN}System:{colorama.Style.RESET_ALL}\n{msg[-1]["content"]}{colorama.Style.RESET_ALL}')
 
 def compress_context(messages):
     # Messages is a list of message objects in the form {'role': 'user', 'content': 'message'}

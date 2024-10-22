@@ -22,18 +22,23 @@ reset = colorama.Style.RESET_ALL
 
 ban_list = ' '.join([f'-site:{ext}' for ext in banned_extensions])
 
-@new_tool('google_search_summarizer', {
-  'name': 'google_search_summarizer',
+@new_tool('google_search', {
+  'name': 'google_search',
+  'display': 'Retrieve and summarize Google search results',
   'description': 'Searches Google, summarizes the first 5 URLs found, and then summarizes the batch.',
   'parameters': {
     'type': 'object',
     'properties': {
+      'reasoning': {
+          'type': 'string',
+          'description': 'The reasoning behind your choice of this action.'
+      },
       'query': {
         'type': 'string',
         'description': 'The search query to input to Google  Use any keywords and SEO techniques to describe what you are looking for. Don\'t include a date or year for any searches not related specifically to the past.',
       }
     },
-    'required': ['query']
+    'required': ['query', 'reasoning']
   }
 })
 def google_search_summarizer(data, limit=5):

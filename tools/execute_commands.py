@@ -70,10 +70,15 @@ def process_commands(commands):
 
 @new_tool('execute_commands', {
     'name': 'execute_commands',
+    'display': 'Performs a list of commands in the terminal.',
     'description': f'Executes a list of {os_version} commands.',
     'parameters': {
         'type': 'object',
         'properties': {
+            'reasoning': {
+                'type': 'string',
+                'description': 'The reasoning behind your choice of this action.'
+            },
             'commands': {
                 'type': 'array',
                 'description': 'An array of commands to execute.',
@@ -83,7 +88,7 @@ def process_commands(commands):
                 }
             }
         },
-        'required': ['commands']
+        'required': ['commands', 'reasoning']
     }
 })
 def execute_commands(comm, override=False):

@@ -17,12 +17,17 @@ cyan = colorama.Fore.CYAN
 underline = "\033[4m"
 reset = colorama.Style.RESET_ALL
 
-@new_tool('website_researcher', {
-    'name': 'website_researcher',
+@new_tool('web_researcher', {
+    'name': 'web_researcher',
+    'display': 'Read and summarize the content of the website following related links.',
     'description': 'Performs research on a specific website by following links on the site to gather knowledge.',
     'parameters': {
         'type': 'object',
         'properties': {
+            'reasoning': {
+                'type': 'string',
+                'description': 'The reasoning behind your choice of this action.'
+            },
             'base_url': {
                 'type': 'string',
                 'description': 'The base URL of the website to start the research.',
@@ -42,7 +47,7 @@ reset = colorama.Style.RESET_ALL
                 'default': 1
             }
         },
-        'required': ['base_url', 'query']
+        'required': ['base_url', 'query', 'reasoning']
     }
 })
 def website_researcher(data):

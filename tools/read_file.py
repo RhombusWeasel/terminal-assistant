@@ -10,16 +10,21 @@ conf.read('config.ini')
 
 @new_tool('read_file', {
     'name': 'read_file',
+    'display': 'Reads a file from the filesystem.',
     'description': 'Reads a file.',
     'parameters': {
       'type': 'object',
       'properties': {
+        'reasoning': {
+            'type': 'string',
+            'description': 'The reasoning behind your choice of this action.'
+        },
         'file': {
           'type': 'string',
           'description': 'The path to the file to read. the filepath will have the current working directory added for you, simply give a path relative to the working directory.',
         }
       },
-      'required': ['file']
+      'required': ['file', 'reasoning']
     }
   }
 )

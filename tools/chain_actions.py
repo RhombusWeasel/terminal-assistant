@@ -9,10 +9,15 @@ funcs = [value['schema'] for key, value in tools.items()]
 
 @new_tool('chain_actions', {
     'name': 'chain_actions',
+    'display': 'Performs a chain of actions with self correction.',
     'description': 'If the user has asked you to perform a multi step series of actions then use this tool. Executes a chain of actions in sequence to achieve the users goal. Each action in the chain must be valid and from this list and be presented as an object in the following format: { "action": "action_name", "args": {"arg_name": "arg_value"...} }.',
     'parameters': {
         'type': 'object',
         'properties': {
+            'reasoning': {
+                'type': 'string',
+                'description': 'The reasoning behind your choice of this action.'
+            },
             'actions': {
                 'type': 'array',
                 'items': {
@@ -32,7 +37,7 @@ funcs = [value['schema'] for key, value in tools.items()]
                 'description': 'A list of actions to perform in sequence.'
             }
         },
-        'required': ['actions']
+        'required': ['reasoning', 'actions']
     }
 })
 def chain_actions(data):

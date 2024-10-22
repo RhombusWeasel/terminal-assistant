@@ -28,16 +28,21 @@ def get_ticker_data(ticker):
   
 @new_tool('stock_data', {
   'name': 'stock_data',
+  'display': 'Gets data on a stock.',
   'description': 'Gets data on a stock. This data includes information such as the stock\'s name, sector, analyst ratings and more.',
   'parameters': {
     'type': 'object',
     'properties': {
+      'reasoning': {
+          'type': 'string',
+          'description': 'The reasoning behind your choice of this action.'
+      },
       'ticker': {
         'type': 'string',
         'description': 'The stock ticker to get data on.'
       }
     },
-    'required': ['ticker']
+    'required': ['ticker', 'reasoning']
   }
 })
 def stock_data(data):

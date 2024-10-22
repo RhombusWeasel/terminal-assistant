@@ -10,10 +10,15 @@ working_directory = conf.get('term', 'working_directory')
 
 @new_tool('write_file', {
   'name': 'write_file',
+  'display': 'Writes a file to the filesystem.',
   'description': 'Writes to a file.',
   'parameters': {
     'type': 'object',
     'properties': {
+      'reasoning': {
+          'type': 'string',
+          'description': 'The reasoning behind your choice of this action.'
+      },
       'file': {
         'type': 'string',
         'description': 'The path to the file to write to.',
@@ -23,7 +28,7 @@ working_directory = conf.get('term', 'working_directory')
         'description': 'The content to write to the file.',
       }
     },
-    'required': ['file', 'content']
+    'required': ['file', 'content', 'reasoning']
   }
 })
 def write_file(data):

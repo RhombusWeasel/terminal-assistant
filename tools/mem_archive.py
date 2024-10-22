@@ -1,6 +1,7 @@
 from utils.tools import new_tool
 from utils.logger import Logger
 from utils.memory_client import MemoryClient
+from utils.prompt_tools import print_msg
 from utils.async_ai import Agent
 import configparser
 import json
@@ -73,15 +74,20 @@ tools = [
 
 @new_tool('mem_archive', {
     'name': 'mem_archive',
+    'display': 'Archives conversation data to memory.',
     'description': "Add or update data in the memory archive. Only use if the user or system requests it.",
     'parameters': {
       'type': 'object',
       'properties': {
+        'reasoning': {
+            'type': 'string',
+            'description': 'The reasoning behind your choice of this action.'
+        },
         'tags': { 'type': 'array', 'items': { 'type': 'string' }, 'description': 'The list of tags to add to the data, be descriptive and include multiple tags.' },
         'data': { 'type': 'string', 'description': 'The data to archive.' },
         'instructions': { 'type': 'string', 'description': 'The instructions to the archivist agent of what it should do with the data.  Include context of the conversation to help the archivist.' }
       },
-      'required': ['tags', 'data', 'instructions']
+      'required': ['reasoning', 'tags', 'data', 'instructions']
     }
   }
 )
@@ -94,7 +100,7 @@ def mem_archive(data):
   tags = f'{" ".join(data["tags"])}'
   results = client.search('terminal-assistant', tags)
   # print(results)
-  agent = Agent(print_tokens=False, log_level=logger.DEBUG, model='gpt-3.5-turbo-16k')
+  agent = Agent(print_tokens=False, log_level=logger.DEBUG, model='gpt-4o')
   m = [
     {"role": "system", "content": agent_prompt},
     {"role": "system", "content": """Here are the tags that were searched to get the archive data:\n\n['mother', 'date of birth']\n\nHere are the top 2 results from our search of the provided tags:\n\n[{'distance': 0.7682497501373291, 'uuid': 1, 'text': '{"tags": ["family", "parents", "siblings"], "mother": {"name": "Hazel", "location": "Yorkshire, England", "birthday": "August 24th, 1964", "interests": ["knitting", "reading", "cooking"]}, "father": {"name": "James", "location": "Yorkshire, England", "birthday": "January 15th, 1960", "interests": ["gardening", "60\'s, 70\'s and 80\'s music", "the outdoors"]}}'}, {'distance': 1.0330601930618286, 'uuid': 2, 'text': '{"tags": ["food", "recipes", "cooking"], "favourites": {"breakfast": "eggs and bacon", "lunch": "a sandwich", "dinner": "steak with peppercorn sauce", "dessert": "creme brulee"}}'}]\n\nHere is the new information for you to review:\n\n"Mothers Birthday is 24th August 1963"\n\nInstructions provided:\n\nAdd updated date of birth\nDoes the new information need to be merged with one of the existing objects or is it completely unrelated?\nCall the correct function to complete the task."""},
@@ -122,6 +128,7 @@ def mem_archive(data):
       except:
         store_data = args['data']
       client.modify_entry('terminal-assistant', int(args['uuid']), store_data)
+      print_msg([{'role': 'system', 'content': 'Memory updated.'}])
     return [{'role': 'system', 'content': 'Memory updated.'}]
   else:
     return [{'role': 'system', 'content': 'Memory already present.'}]

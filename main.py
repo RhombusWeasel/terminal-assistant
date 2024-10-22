@@ -1,7 +1,7 @@
 from utils.logger import Logger
 from utils.async_ai import Agent
 from utils.tools import tools
-from utils.prompt_tools import reset_prompt, print_msg
+from utils.prompt_tools import reset_prompt, print_msg, compress_context
 import configparser
 import colorama
 import readline
@@ -46,7 +46,7 @@ def load_tools():
       tool = file[:-3]
       if tool not in tools:
         __import__(f'tools.{tool}')
-        logger.info(f'Loaded tool {tool}')
+        logger.debug(f'Loaded tool {tool}')
 
 colorama.init()
 resend = False
@@ -55,7 +55,7 @@ def process_query(query, msg, agent, resend=False):
   global funcs
   if not resend:
     msg.append({'role': 'user', 'content': query})
-    print_msg(msg)
+    # print_msg(msg)
   response = agent.get_response(msg, functions=funcs, temperature=0.6)
   tokens = response['tokens']
   response = response['text']
@@ -74,18 +74,13 @@ def process_query(query, msg, agent, resend=False):
     responses = tools[key]['function'](args)
     for i, response in enumerate(responses):
       msg.append(response)
-      # if i < len(responses) - 1:
-      #   print_msg(msg)
       if 'resend' in response:
         msg[-1].pop('resend', None)
         # New data has been added to the message list, so we need to resend it to OpenAI with the new data
         msg = process_query(query, msg, agent, resend=True)
   token_limit = conf.getint('ai', 'token_limit')
   if tokens['total_tokens'] > token_limit:
-    msg.append({'role': 'system', 'content': f'Token limit exceeded.  to conserve information please now summarize the above conversation and respond with the notes in as few tokens as possible.  Use various techniques to compress as much information into the response as possible as you will not see the information after this message.'})
-    response = agent.get_response(msg, functions=funcs, temperature=0.6)
-    msg = reset_prompt()
-    msg.append({'role': 'user', 'content': response['text']})
+    msg = compress_context(msg)
   return msg
 
 def helptext():
@@ -160,7 +155,6 @@ def main():
           responses = execute_commands_tool['function']({'commands': [p]}, override=True)
           for response in responses:
             msg.append(response)
-            print_msg(msg)
         else:
           print("Error: 'execute_commands' tool not found.")
       else:
@@ -169,14 +163,15 @@ def main():
         elif p in aliases['tools']['aliases']:
           print('Available tools:')
           load_tools()
-          for tool in tools:
-            print(f'  {tool} - {tools[tool]["schema"]["description"]}')
+          for tool in sorted(tools.keys()):
+            print(f'  {colorama.Fore.YELLOW}{tools[tool]["schema"]["name"].ljust(20)}{colorama.Style.RESET_ALL}: {tools[tool]["schema"]["display"]}')
         elif p in aliases['clear']['aliases']:
           msg = reset_prompt()
           clear_screen()
           print('Message history cleared')
         else:
           msg = process_query(p, msg, agent)
+          print(f'{colorama.Fore.WHITE}{conf.get("term", "name")}{colorama.Style.RESET_ALL}:')
           print_msg(msg)
   finally:  # Save command history when the program ends
     save_history()
